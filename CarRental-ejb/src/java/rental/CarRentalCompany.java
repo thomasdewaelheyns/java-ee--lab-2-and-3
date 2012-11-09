@@ -1,5 +1,6 @@
 package rental;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -36,6 +37,11 @@ public class CarRentalCompany {
     
     }
     
+    public CarRentalCompany(String name) {
+        logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up... with no added cars", name);
+        setName(name);
+        this.cars = new ArrayList<Car>();
+    }
     
     public CarRentalCompany(String name, List<Car> cars) {
         logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up...", name);
@@ -188,5 +194,9 @@ public class CarRentalCompany {
             }
         }
         return out;
+    }
+    
+    public void addCar(Car car){
+        this.cars.add(car);
     }
 }

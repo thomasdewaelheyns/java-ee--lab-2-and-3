@@ -81,6 +81,10 @@ public class ManagerSession implements ManagerSessionRemote {
         return out;
     }
 
+    
+    /*
+     * Add companies with their cars in one time
+     */
     @Override
     public void initializeServer(HashMap<String, List<CarData>> fileContent) throws Exception{
         List<String> companies = new ArrayList<String>();
@@ -132,5 +136,82 @@ public class ManagerSession implements ManagerSessionRemote {
             }
         }
         return returnList;
+    }
+    
+    /*
+     * Add companies without any cars
+     */
+    
+    @Override
+    public void addCompany(String name) throws Exception{
+        List<CarRentalCompany> companies = em.createQuery("SELECT c FROM CarRentalCompany c WHERE c.name LIKE :custName").setParameter("custName", name).getResultList();
+        if(companies.isEmpty()){
+            CarRentalCompany comp = new CarRentalCompany(name);
+            em.persist(comp);
+        }
+        else{
+            throw new Exception("A company with that name already exists.");
+        }
+    }
+    
+    
+    @Override
+    public void addCarToCompany(String name, CarData data) throws Exception{
+        List<CarRentalCompany> companies = em.createQuery("SELECT c FROM CarRentalCompany c WHERE c.name LIKE :custName").setParameter("custName", name).getResultList();
+        if(!companies.isEmpty()){
+            List<CarType> types = em.createQuery("SELECT carType FROM CarType carType WHERE carType.name LIKE :custName "
+                    + "AND carType.nbOfSeats LIKE :custSeats AND carType.rentalPricePerDay LIKE :custPrice "
+                    + "AND carType.trunkSpace LIKE :custSpace AND carType.smokingAllowed LIKE :custSmoking ")
+                    .setParameter("custName", data.getName())
+                    .setParameter("custSeats", data.getNbOfSeats())
+                    .setParameter("custPrice", data.getRentalPricePerDay())
+                    .setParameter("custSpace", data.getTrunkSpace())
+                    .setParameter("custSmoking", data.getSmokingAllowed())
+                    .getResultList();
+            if(types.isEmpty()){
+                //create new type and create the car
+                CarType carType = new CarType(data.getName(), data.getNbOfSeats(), data.getTrunkSpace(), data.getRentalPricePerDay(), data.getSmokingAllowed());
+                em.persist(carType);
+                Car car = new Car(types.get(0));
+                em.persist(car);
+                companies.get(0).addCar(car);
+                
+            }
+            else{
+                //The type already exists. Use it to create a new Car.
+                Car car = new Car(types.get(0));
+                em.persist(car);
+                companies.get(0).addCar(car);
+            }
+        }
+        else{
+            throw new Exception("A company with that name does not exists.");
+        }
+        
+    }
+    
+    
+    
+    
+    
+    @Override
+    public void addCarType(CarData data) throws Exception{
+        List<CarType> types = em.createQuery("SELECT carType FROM CarType carType WHERE carType.name LIKE :custName "
+                    + "AND carType.nbOfSeats LIKE :custSeats AND carType.rentalPricePerDay LIKE :custPrice "
+                    + "AND carType.trunkSpace LIKE :custSpace AND carType.smokingAllowed LIKE :custSmoking ")
+                    .setParameter("custName", data.getName())
+                    .setParameter("custSeats", data.getNbOfSeats())
+                    .setParameter("custPrice", data.getRentalPricePerDay())
+                    .setParameter("custSpace", data.getTrunkSpace())
+                    .setParameter("custSmoking", data.getSmokingAllowed())
+                    .getResultList();
+        if(types.isEmpty()){
+            //create new type
+            CarType carType = new CarType(data.getName(), data.getNbOfSeats(), data.getTrunkSpace(), data.getRentalPricePerDay(), data.getSmokingAllowed());
+            em.persist(carType);
+        }
+        else{
+            throw new Exception("This CarType already exists.");
+        }
     }
 }

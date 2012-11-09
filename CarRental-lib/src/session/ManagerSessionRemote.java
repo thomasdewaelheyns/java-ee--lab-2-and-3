@@ -22,4 +22,10 @@ public interface ManagerSessionRemote {
     public Set<Reservation> getReservationsBy(String renter);
     
     public void initializeServer(HashMap<String, List<CarData>> fileContent) throws Exception;
+    
+    public void addCompany(String name) throws Exception;
+    
+    public void addCarToCompany(String name, CarData data) throws Exception;
+    
+    public void addCarType(CarData data) throws Exception;
 }
