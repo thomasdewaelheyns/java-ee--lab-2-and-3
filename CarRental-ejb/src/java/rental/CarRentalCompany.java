@@ -1,7 +1,7 @@
 package rental;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -11,22 +11,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.*;
 
-@Entity()
-public class CarRentalCompany {
+@Entity
+public class CarRentalCompany implements Serializable {
 
     private static Logger logger = Logger.getLogger(CarRentalCompany.class.getName());
     @Id @GeneratedValue private int uniqueIdentifier;
     private String name;
     @OneToMany(cascade= CascadeType.ALL)
     private List<Car> cars;
-    @ManyToMany(cascade=CascadeType.DETACH)
-    private Set<CarType> carTypes = new HashSet<CarType>();
     
     public List<Car> getCars() {
         return cars; 
     }
     public Set<CarType> getCarTypes(){
-        return carTypes;   
+        Set<CarType> carTypes = new HashSet<CarType>();
+        for(Car car: cars){
+            carTypes.add(car.getType());
+        }  
+        return carTypes;
     }
 
     /***************
@@ -47,9 +49,6 @@ public class CarRentalCompany {
         logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up...", name);
         setName(name);
         this.cars = cars;
-        for (Car car : cars) {
-            carTypes.add(car.getType());
-        }
     }
 
     /********
@@ -68,14 +67,15 @@ public class CarRentalCompany {
      * CAR TYPES *
      *************/
     
-    public Collection<CarType> getAllTypes() {
+    /*public Collection<CarType> getAllTypes() {
         return carTypes;
-    }
+    }*/
 
     public CarType getType(String carTypeName) {
-        for(CarType type:carTypes){
-            if(type.getName().equals(carTypeName))
+        for(CarType type:getCarTypes()){
+            if(type.getName().equals(carTypeName)) {
                 return type;
+            }
         }
         throw new IllegalArgumentException("<" + carTypeName + "> No cartype of name " + carTypeName);
     }
@@ -118,6 +118,16 @@ public class CarRentalCompany {
         return out;
     }
     
+    public Set<Integer> getCarsUidByType(CarType type) {
+        Set<Integer> out = new HashSet<Integer>();
+        for (Car car : cars) {
+            if (car.getType().equals(type)) {
+                out.add(car.getId());
+            }
+        }
+        return out;
+    }
+    
      public Set<Car> getCars(String type) {
         Set<Car> out = new HashSet<Car>();
         for (Car car : cars) {
@@ -142,7 +152,7 @@ public class CarRentalCompany {
      * RESERVATIONS *
      ****************/
     
-    public Quote createQuote(ReservationConstraints constraints, String guest)
+    public synchronized Quote createQuote(ReservationConstraints constraints, String guest)
             throws ReservationException {
         logger.log(Level.INFO, "<{0}> Creating tentative reservation for {1} with constraints {2}",
                 new Object[]{name, guest, constraints.toString()});
@@ -165,7 +175,7 @@ public class CarRentalCompany {
                 / (1000 * 60 * 60 * 24D));
     }
 
-    public Reservation confirmQuote(Quote quote) throws ReservationException {
+    public synchronized Reservation confirmQuote(Quote quote) throws ReservationException {
         logger.log(Level.INFO, "<{0}> Reservation of {1}", new Object[]{name, quote.toString()});
         List<Car> availableCars = getAvailableCars(quote.getCarType(), quote.getStartDate(), quote.getEndDate());
         if (availableCars.isEmpty()) {
@@ -189,8 +199,9 @@ public class CarRentalCompany {
         Set<Reservation> out = new HashSet<Reservation>();
         for(Car c : cars) {
             for(Reservation r : c.getReservations()) {
-                if(r.getCarRenter().equals(renter))
+                if(r.getCarRenter().equals(renter)) {
                     out.add(r);
+                }
             }
         }
         return out;

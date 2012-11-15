@@ -4,11 +4,13 @@
  */
 package rental;
 
+import java.io.Serializable;
+
 /**
  *
  * @author s0202397
  */
-public class CarData {
+public class CarData implements Serializable{
     
     String name;
     int nbOfSeats;
@@ -16,7 +18,7 @@ public class CarData {
     double rentalPricePerDay;
     boolean smokingAllowed;
     
-    public void CarData(String name, int nbOfSeats, float trunkSpace, double rentalPricePerDay, boolean smokingAllowed){
+    public CarData(String name, int nbOfSeats, float trunkSpace, double rentalPricePerDay, boolean smokingAllowed){
         this.name = name;
         this.nbOfSeats = nbOfSeats;
         this.trunkSpace = trunkSpace;

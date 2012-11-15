@@ -3,7 +3,7 @@ package rental;
 import java.io.Serializable;
 import javax.persistence.*;
 
-@Entity()
+@Entity
 public class CarType implements Serializable{
     
     @Id @GeneratedValue private int uniqueIdentifier;
